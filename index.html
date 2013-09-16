@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 <html>
+	<head>
+		<style>
+			body {
+				margin: 0;
+				overflow: hidden;
+			}
+		</style>
+	</head>
 	<body>
 
 		<script src="js/three.js"></script>
+		<script src="js/tween.js"></script>
 
 		<script src="js/MTLLoader.js"></script>
 		<script src="js/OBJMTLLoader.js"></script>
@@ -11,12 +20,19 @@
 
 			var container, stats;
 
-			var camera, scene, renderer;
+			var camera, scene, renderer, object;
 
 			var mouseX = 0, mouseY = 0;
 
 			var windowHalfX = window.innerWidth / 2;
 			var windowHalfY = window.innerHeight / 2;
+
+			var key = {
+				UP: 38,
+				DOWN: 40,
+				LEFT: 37,
+				RIGHT: 39
+			};
 
 
 			init();
@@ -25,11 +41,8 @@
 
 			function init() {
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
-
 				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.z = 40;
+				camera.position.z = 50;
 
 				// scene
 
@@ -53,7 +66,11 @@
 
 				var loader = new THREE.OBJMTLLoader();
 				loader.addEventListener( 'load', function ( event ) {
-					var object = event.content;
+					object = event.content;
+
+					// turn object
+					object.rotation.y = Math.PI;
+
 					scene.add( object );
 
 				});
@@ -63,32 +80,62 @@
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
+				document.body.appendChild( renderer.domElement );
 
-				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize, false );
+				//document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 
 			}
 
-			function onWindowResize() {
+			// function onDocumentMouseMove( event ) {
 
-				windowHalfX = window.innerWidth / 2;
-				windowHalfY = window.innerHeight / 2;
+			// 	mouseX = ( event.clientX - windowHalfX ) / 2;
+			// 	mouseY = ( event.clientY - windowHalfY ) / 2;
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+			// }
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
+			function spinAvatar(angle) {
+				new TWEEN.Tween( { z: object.rotation.z } )
+					.to( { z: angle }, 1000 )
+					.onUpdate( function () {
+						object.rotation.z = this.z;
+					} )
+				.start();
 			}
 
-			function onDocumentMouseMove( event ) {
+			function up(angle) {
+				new TWEEN.Tween( { x: object.rotation.x } )
+					.to( { x: angle }, 1000 )
+					.onUpdate( function () {
+						object.rotation.x = this.x;
+					} )
+				.start();
+			}
 
-				mouseX = ( event.clientX - windowHalfX ) / 2;
-				mouseY = ( event.clientY - windowHalfY ) / 2;
+			function onDocumentKeyDown( event ) {
+
+				var code = event.keyCode;
+
+				switch (code) {
+					case key.UP:
+						up(-Math.PI/7)
+						console.log('UP');
+						break;
+					case key.DOWN:
+						up(Math.PI/7)
+						console.log('DOWN');
+						break;
+					case key.LEFT:
+						spinAvatar(Math.PI)
+						console.log('LEFT');
+						break;
+					case key.RIGHT:
+						spinAvatar(2*Math.PI)	
+						console.log('RIGHT');
+						break;
+				}
+
+				console.log(object.rotation);
 
 			}
 
@@ -97,17 +144,14 @@
 			function animate() {
 
 				requestAnimationFrame( animate );
+				TWEEN.update();
 				render();
 
 			}
 
 			function render() {
 
-				camera.position.x += ( mouseX - camera.position.x ) * .05;
-				camera.position.y += ( - mouseY - camera.position.y ) * .05;
-
 				camera.lookAt( scene.position );
-
 				renderer.render( scene, camera );
 
 			}
